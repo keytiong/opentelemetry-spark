@@ -55,7 +55,7 @@ public class ApacheSparkSingletons {
       new PropertiesTextMapAccessor();
 
   public static final Tracer TRACER =
-      OPEN_TELEMETRY.getTracer("io.opentelemetry.apache-spark", "0.11.0-SNAPSHOT");
+      OPEN_TELEMETRY.getTracer("io.opentelemetry.apache-spark", "0.11.0");
 
   public static final LoggerProvider LOGGER_PROVIDER = OPEN_TELEMETRY.getLogsBridge();
 
