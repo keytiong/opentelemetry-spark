@@ -9,11 +9,11 @@ plugins {
     into a single jar.
     See https://imperceptiblethoughts.com/shadow/ for more details about Shadow plugin.
      */
-    id "com.github.johnrengelman.shadow" version "8.1.1"
-    id "com.diffplug.spotless" version "6.25.0"
+    id "com.gradleup.shadow" version "8.3.9"
+    id "com.diffplug.spotless" version "7.2.1"
 
-    id "io.opentelemetry.instrumentation.muzzle-generation" version "2.1.0-alpha"
-    id "io.opentelemetry.instrumentation.muzzle-check" version "2.1.0-alpha"
+    id "io.opentelemetry.instrumentation.muzzle-generation" version "2.19.0-alpha"
+    id "io.opentelemetry.instrumentation.muzzle-check" version "2.19.0-alpha"
 
 }
 
@@ -157,16 +157,18 @@ muzzle {
     pass {
         group.set("org.apache.spark")
         module.set("spark-core_2.11")
-        versions.set("[2.4,)")
+        versions.set("[2.4,4.0)")
         assertInverse.set(true)
     }
 
     pass {
         group.set("org.apache.spark")
         module.set("spark-core_2.12")
-        versions.set("[2.4,)")
+        versions.set("[2.4,4.0)")
         assertInverse.set(true)
     }
 }
-sourceCompatibility = JavaVersion.VERSION_1_9
-targetCompatibility = JavaVersion.VERSION_1_9
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
