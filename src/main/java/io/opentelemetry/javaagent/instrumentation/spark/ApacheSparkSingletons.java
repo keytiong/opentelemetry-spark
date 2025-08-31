@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.spark.SparkConf;
 import org.apache.spark.executor.Executor;
 import org.apache.spark.scheduler.*;
 
@@ -122,6 +123,13 @@ public class ApacheSparkSingletons {
   public static String applicationName() {
     if (DAG_SCHEDULER != null) {
       return DAG_SCHEDULER.sc().appName();
+    }
+    return null;
+  }
+
+  public static SparkConf sparkConf() {
+    if (DAG_SCHEDULER != null) {
+      return DAG_SCHEDULER.sc().conf();
     }
     return null;
   }

@@ -27,6 +27,9 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.logs.Logger;
 import io.opentelemetry.api.logs.Severity;
 import java.util.concurrent.TimeUnit;
+import org.apache.spark.SparkConf;
+import org.apache.spark.scheduler.EventLoggingListener$;
+import org.apache.spark.scheduler.SparkListenerEnvironmentUpdate;
 import org.apache.spark.scheduler.SparkListenerEvent;
 
 public class SparkEventLogger {
@@ -44,26 +47,44 @@ public class SparkEventLogger {
 
   public static void emitSparkEvent(SparkListenerEvent event, Long timestamp) {
 
-    String eventJsonString = JsonProtocol.sparkEventToJsonString(event);
+    SparkListenerEvent evt;
+    long ts;
+
+    if (event instanceof SparkListenerEnvironmentUpdate) {
+      evt = redactEvent((SparkListenerEnvironmentUpdate) event);
+    } else {
+      evt = event;
+    }
+
+    String eventJsonString = JsonProtocol.sparkEventToJsonString(evt);
 
     String eventName = String.format("spark.%s", event.getClass().getSimpleName());
 
     if (timestamp == null) {
-      timestamp = EventTimeAccessor.getEventTime(event);
-    }
-
-    if (timestamp == null) {
-      timestamp = System.currentTimeMillis();
+      Long evtTime = EventTimeAccessor.getEventTime(event);
+      if (evtTime != null) {
+        ts = evtTime;
+      } else {
+        ts = System.currentTimeMillis();
+      }
+    } else {
+      ts = timestamp;
     }
 
     if (eventJsonString != null) {
       SPARK_EVENT_LOGGER
           .logRecordBuilder()
-          .setTimestamp(timestamp, TimeUnit.MILLISECONDS)
+          .setTimestamp(ts, TimeUnit.MILLISECONDS)
           .setSeverity(Severity.INFO)
           .setAttribute(EVENT_NAME_ATTR_KEY, eventName)
           .setBody(eventJsonString)
           .emit();
     }
+  }
+
+  private static SparkListenerEnvironmentUpdate redactEvent(SparkListenerEnvironmentUpdate event) {
+    SparkConf sparkConf = ApacheSparkSingletons.sparkConf();
+    EventLoggingListener$ listener = EventLoggingListener$.MODULE$;
+    return listener.redactEvent(sparkConf, event);
   }
 }
