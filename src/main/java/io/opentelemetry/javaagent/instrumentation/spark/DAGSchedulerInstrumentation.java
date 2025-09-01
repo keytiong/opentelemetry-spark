@@ -27,6 +27,8 @@ import static io.opentelemetry.javaagent.instrumentation.spark.ApacheSparkSingle
 import static net.bytebuddy.asm.Advice.*;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.ContextStorage;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeInstrumentation;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeTransformer;
 import net.bytebuddy.description.type.TypeDescription;
@@ -46,6 +48,9 @@ public class DAGSchedulerInstrumentation implements TypeInstrumentation {
 
   @Override
   public void transform(TypeTransformer typeTransformer) {
+
+    typeTransformer.applyAdviceToMethod(
+        named("submitJob"), this.getClass().getName() + "$SubmitJobAdvice");
 
     typeTransformer.applyAdviceToMethod(
         isConstructor()
@@ -73,6 +78,18 @@ public class DAGSchedulerInstrumentation implements TypeInstrumentation {
         @Argument(6) Clock clock) {
 
       registerDagScheduler(dagScheduler);
+    }
+  }
+
+  public static class SubmitJobAdvice {
+
+    @OnMethodExit()
+    public static void exit(@Return JobWaiter<?> jobWaiter) {
+      Context parentContext = ContextStorage.get().current();
+      if (parentContext != null) {
+        int jobId = jobWaiter.jobId();
+        ApacheSparkSingletons.storeJobContext(jobId, parentContext);
+      }
     }
   }
 }

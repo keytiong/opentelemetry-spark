@@ -52,7 +52,11 @@ public class SparkEventListener {
   public static void onJobStart(SparkListenerJobStart event) {
 
     Integer jobId = event.jobId();
-    Context parentContext = Context.current();
+
+    Context parentContext = ApacheSparkSingletons.getJobContext(jobId);
+    if (parentContext == null) {
+      parentContext = Context.current();
+    }
 
     Span jobSpan =
         ApacheSparkSingletons.TRACER
